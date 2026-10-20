@@ -97,13 +97,25 @@
           </div>
         </div>
 
-        <!-- ဝယ်သူ အချက်အလက်ဖြည့်ပြီး စလစ်တင်ရန် -->
+        <!-- ဝယ်သူ ဆက်သွယ်မည့် နည်းလမ်း ရွေးချယ်ရန် အပိုင်း (Telegram / Viber) -->
         <div class="space-y-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">သင့် Telegram (@username) သို့မဟုတ် ဖုန်း/Viber နံပါတ်:</label>
+            <label class="block text-xs font-bold text-slate-700 mb-2">ထီလက်မှတ်ပုံ လက်ခံရယူမည့် နည်းလမ်း ရွေးပါ:</label>
+            <div class="grid grid-cols-2 gap-2 mb-2.5">
+              <button type="button" onclick="selectContactType('telegram')" id="tab-tg"
+                      class="py-2.5 px-3 rounded-xl border-2 border-sky-500 bg-sky-50 text-sky-700 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                <span>✈️ Telegram</span>
+              </button>
+              <button type="button" onclick="selectContactType('viber')" id="tab-viber"
+                      class="py-2.5 px-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-600 font-bold text-xs flex items-center justify-center gap-2 transition">
+                <span>🟣 Viber</span>
+              </button>
+            </div>
+
+            <label id="contact-label" class="block text-xs font-bold text-slate-700 mb-1">သင့် Telegram (@username သို့မဟုတ် ဖုန်း):</label>
             <input type="text" id="cust-contact" placeholder="ဥပမာ - @username (သို့) 09..." 
-                   class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-500 bg-slate-50">
-            <span class="text-[11px] text-slate-400 mt-1 block">* Telegram Username မသိပါက ဖုန်းနံပါတ် (09...) ကို ရိုက်ထည့်နိုင်ပါသည်</span>
+                   class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-500 bg-slate-50 placeholder:text-xs">
+            <span class="text-[11px] text-slate-400 mt-1 block">* အကောင့်မသိပါက အလွတ်ထားခဲ့နိုင်ပြီး အောက်တွင် စလစ်တင်နိုင်ပါသည်</span>
           </div>
 
           <div>
@@ -119,26 +131,39 @@
 
       </div>
 
-      <!-- ဝယ်ယူပြီးနောက် အောင်မြင်ကြောင်းနှင့် Admin ထံ ဆက်သွယ်ရန် Modal -->
+      <!-- ဝယ်ယူပြီးနောက် Admin ထံ တိုက်ရိုက်ဆက်သွယ်ရန် Popup Modal -->
       <div id="success-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-5 max-w-sm w-full text-center space-y-4 shadow-2xl">
           <div class="text-4xl">🎉</div>
           <h3 class="text-lg font-bold text-slate-800">အော်ဒါတင်ခြင်း အောင်မြင်ပါသည်!</h3>
           <p class="text-xs text-slate-600 leading-relaxed">
-            Order ID: <b id="modal-order-id" class="text-purple-700 font-mono text-sm"></b> အတွက် စလစ်ပေးပို့ပြီးပါပြီ။<br>
-            ထီလက်မှတ်ပုံကို ပိုမိုမြန်ဆန်စွာ ရယူနိုင်ရန် Admin ထံ တိုက်ရိုက် စာပို့နိုင်ပါသည်ခင်ဗျာ။
+            Order ID: <b id="modal-order-id" class="text-purple-700 font-mono text-sm"></b><br>
+            ထီလက်မှတ်ပုံကို ချက်ချင်း ရယူနိုင်ရန် သင်အဆင်ပြေသည့် လမ်းကြောင်းမှတစ်ဆင့် Admin ထံ စာပို့ပေးပါခင်ဗျာ။
           </p>
 
           <div class="space-y-2 pt-2">
-            <a id="btn-contact-tg" href="#" target="_blank" class="block w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl text-xs transition">
-              👉 Telegram ဖြင့် Admin ထံ စာပို့မည်
+            <!-- Telegram (@tradejohnn) ခလုတ် -->
+            <a id="btn-contact-tg" href="#" target="_blank" class="block w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+              <span>✈️</span> Telegram (@tradejohnn) ဖြင့် စာပို့မည်
             </a>
-            <a id="btn-contact-viber" href="#" target="_blank" class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl text-xs transition">
-              💬 Viber ဖြင့် Admin ထံ စာပို့မည်
+
+            <!-- Viber ခလုတ် -->
+            <a id="btn-contact-viber" href="#" class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+              <span>🟣</span> Viber (09975191980) ဖြင့် စာပို့မည်
+            </a>
+
+            <!-- Viber နံပါတ် Copy ကူးရန် ခလုတ် -->
+            <button onclick="copyAdminViber()" type="button" class="w-full bg-purple-50 text-purple-700 border border-purple-200 font-bold py-2 rounded-xl text-xs hover:bg-purple-100 transition">
+              📋 Admin Viber နံပါတ် Copy ကူးမည်
+            </button>
+
+            <!-- တိုက်ရိုက်ဖုန်းခေါ်ဆိုရန် ခလုတ် -->
+            <a href="tel:09975191980" class="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-xl text-xs transition">
+              📞 Admin ဖုန်းတိုက်ရိုက်ခေါ်မည် (09975191980)
             </a>
           </div>
 
-          <button onclick="location.reload()" class="w-full border border-slate-300 text-slate-600 py-2 rounded-xl text-xs font-semibold hover:bg-slate-50">
+          <button onclick="location.reload()" class="w-full border border-slate-300 text-slate-500 py-2 rounded-xl text-xs font-semibold hover:bg-slate-50 mt-1">
             ပိတ်မည်
           </button>
         </div>
@@ -150,139 +175,27 @@
   <script>
     // Admin ဆက်သွယ်ရန် အချက်အလက်များ
     const ADMIN_PHONE = '09975191980';
-    const ADMIN_VIBER = '959975191980'; // International format
-    const ADMIN_TG_PHONE = '+959975191980';
+    const ADMIN_VIBER = '959975191980';
+    const ADMIN_TG_USERNAME = 'tradejohnn';
 
     let currentOrderId = '';
     let selectedTicket = null;
     let allTickets = [];
+    let currentContactMethod = 'telegram'; // Default contact method
 
-    async function loadTickets() {
-      const container = document.getElementById('tickets-container');
-      try {
-        const res = await fetch('/api/tickets?t=' + Date.now());
-        const data = await res.json();
-        allTickets = Array.isArray(data) ? data : [];
-        renderTickets(allTickets);
-      } catch (err) {
-        container.innerHTML = '<div class="col-span-2 text-center text-red-500 py-6 text-xs">လက်မှတ်များ ဆွဲယူ၍ မရပါ</div>';
-      }
-    }
+    // Telegram သို့မဟုတ် Viber ရွေးချယ်မှု ပြောင်းလဲသည့် Function
+    function selectContactType(type) {
+      currentContactMethod = type;
+      const tabTg = document.getElementById('tab-tg');
+      const tabViber = document.getElementById('tab-viber');
+      const label = document.getElementById('contact-label');
+      const input = document.getElementById('cust-contact');
 
-    function renderTickets(tickets) {
-      const container = document.getElementById('tickets-container');
-      const countEl = document.getElementById('ticket-count');
-      container.innerHTML = '';
-      countEl.innerText = `${tickets.length} စောင် ရနိုင်ပါသည်`;
-
-      if (tickets.length === 0) {
-        container.innerHTML = '<div class="col-span-2 text-center text-slate-400 py-8 text-xs font-medium">လက်မှတ် မရှိပါခင်ဗျာ။</div>';
-        return;
-      }
-
-      tickets.forEach(ticket => {
-        const price = ticket.price || 15000;
-        const isTwin = price === 30000;
-        const div = document.createElement('div');
-        div.className = 'border-2 border-slate-200 rounded-xl p-3 text-center cursor-pointer hover:border-blue-500 bg-slate-50 hover:bg-white transition relative overflow-hidden shadow-sm';
-        div.innerHTML = `
-          <span class="absolute top-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${isTwin ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
-            ${isTwin ? '၂ စောင်တွဲ' : '၁ စောင်တွဲ'}
-          </span>
-          <div class="text-xl font-bold tracking-wider text-slate-800 mt-2 font-mono">${ticket.ticket_number}</div>
-          <div class="text-xs font-semibold text-red-500 mt-1">${Number(price).toLocaleString()} Ks</div>
-        `;
-        div.onclick = () => selectTicket(ticket);
-        container.appendChild(div);
-      });
-    }
-
-    function filterTickets() {
-      const query = document.getElementById('search-input').value.trim();
-      document.getElementById('clear-btn').classList.toggle('hidden', query.length === 0);
-      if (!query) return renderTickets(allTickets);
-      const filtered = allTickets.filter(t => 
-        String(t.ticket_number).startsWith(query) || String(t.ticket_number).includes(query)
-      );
-      renderTickets(filtered);
-    }
-
-    function clearSearch() {
-      document.getElementById('search-input').value = '';
-      document.getElementById('clear-btn').classList.add('hidden');
-      renderTickets(allTickets);
-    }
-
-    function selectTicket(ticket) {
-      selectedTicket = ticket;
-      currentOrderId = 'ORD' + Math.floor(100000 + Math.random() * 900000);
-
-      const price = ticket.price || 15000;
-      document.getElementById('selected-ticket-num').innerText = ticket.ticket_number;
-      document.getElementById('selected-ticket-type').innerText = price === 30000 ? '၂ စောင်တွဲ' : '၁ စောင်တွဲ';
-      document.getElementById('selected-ticket-price').innerText = `${Number(price).toLocaleString()} ကျပ်`;
-      document.getElementById('display-order-id').innerText = currentOrderId;
-
-      document.getElementById('checkout-box').classList.remove('hidden');
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
-
-    function copyOrderId() {
-      if (!currentOrderId) return;
-      navigator.clipboard.writeText(currentOrderId);
-      alert('Order ID ကို Copy ကူးပြီးပါပြီ: ' + currentOrderId);
-    }
-
-    async function submitOrderWithSlip() {
-      const contact = document.getElementById('cust-contact').value.trim();
-      const fileInput = document.getElementById('slip-file');
-      const btn = document.getElementById('btn-submit');
-
-      if (!contact) {
-        alert('သင့် Telegram သို့မဟုတ် ဖုန်းနံပါတ် ဖြည့်သွင်းပေးပါခင်ဗျာ');
-        return;
-      }
-      if (!fileInput.files || fileInput.files.length === 0) {
-        alert('ငွေလွှဲပြေစာ (စလစ်) ဓာတ်ပုံကို ရွေးချယ်ပေးပါခင်ဗျာ');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerText = 'တင်ပို့နေပါသည်...';
-
-      const formData = new FormData();
-      formData.append('order_id', currentOrderId);
-      formData.append('ticket_id', selectedTicket.id);
-      formData.append('ticket_number', selectedTicket.ticket_number);
-      formData.append('customer_contact', contact);
-      formData.append('slip_image', fileInput.files[0]);
-
-      try {
-        const res = await fetch('/api/submit-order', { method: 'POST', body: formData });
-        const data = await res.json();
-        if (data.success) {
-          // Modal ပြသပြီး Admin ထံ 1-Click စာပို့ခလုတ်များ ချိတ်ပေးခြင်း
-          const prefillText = encodeURIComponent(`မင်္ဂလာပါ၊ ကျွန်တော် ထိုင်းထီ ထိုးထားတဲ့ Order ID: ${currentOrderId} (${selectedTicket.ticket_number}) အတွက် စလစ်ပို့ထားပြီးပါပြီခင်ဗျာ။`);
-          
-          document.getElementById('modal-order-id').innerText = currentOrderId;
-          document.getElementById('btn-contact-tg').href = `https://t.me/${ADMIN_TG_PHONE}?text=${prefillText}`;
-          document.getElementById('btn-contact-viber').href = `viber://chat?number=%2B${ADMIN_VIBER}&draft=${prefillText}`;
-
-          const modal = document.getElementById('success-modal');
-          modal.classList.remove('hidden');
-          modal.classList.add('flex');
-        } else {
-          alert('မအောင်မြင်ပါ: ' + (data.error || 'အမှားရှိနေပါသည်'));
-        }
-      } catch (err) {
-        alert('ချိတ်ဆက်မှု အမှားဖြစ်နေပါသည်');
-      } finally {
-        btn.disabled = false;
-        btn.innerText = '🚀 အော်ဒါတင်ပြီး စလစ်ပို့မည်';
-      }
-    }
-
-    loadTickets();
-  </script>
-</body>
-</html>
+      if (type === 'telegram') {
+        tabTg.className = 'py-2.5 px-3 rounded-xl border-2 border-sky-500 bg-sky-50 text-sky-700 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition';
+        tabViber.className = 'py-2.5 px-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-600 font-bold text-xs flex items-center justify-center gap-2 transition';
+        label.innerText = 'သင့် Telegram (@username သို့မဟုတ် ဖုန်း):';
+        input.placeholder = 'ဥပမာ - @username (သို့) 09...';
+      } else {
+        tabViber.className = 'py-2.5 px-3 rounded-xl border-2 border-purple-600 bg-purple-50 text-purple-700 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition';
+        tabTg.className
