@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - 1-Click Direct Send</title>
+  <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen p-4 font-sans">
@@ -149,7 +149,7 @@
     async function loadPendingOrders() {
       const container = document.getElementById('orders-list');
       try {
-        const res = await fetch('/api/admin/pending-orders');
+        const res = await fetch('/api/admin/pending-orders?t=' + Date.now());
         const orders = await res.json();
         container.innerHTML = '';
 
@@ -161,11 +161,6 @@
         orders.forEach(order => {
           const price = order.tickets?.price ? Number(order.tickets.price).toLocaleString() : '15,000';
           const typeStr = order.tickets?.price === 30000 ? '၂ စောင်တွဲ' : '၁ စောင်တွဲ';
-          const tgClean = (order.telegram_chat_id || '').replace('@', '').trim();
-          
-          // Telegram Chat ထဲ စာသား အလိုအလျောက် သွားရောက်ထည့်ပေးမည့် စာသားဖော်မတ်
-          const sendMsg = `မင်္ဂလာပါခင်ဗျာ 🙏\nထိုင်းထီ လက်မှတ်ဝယ်ယူမှုအတွက် ကျေးဇူးတင်ရှိပါသည်။\n\nထီနံပါတ်: ${order.ticket_number} (${typeStr})\nကျသင့်ငွေ: ${price} ကျပ်\n\nလက်မှတ်မူရင်းပုံကို အောက်ပါ Link တွင် ရယူနိုင်ပါသည်:\n${order.ticket_image_url}\n\nကံထူးပါစေခင်ဗျာ! 🌟`;
-          const tgDeepLink = `https://t.me/${tgClean}?text=${encodeURIComponent(sendMsg)}`;
 
           const card = document.createElement('div');
           card.className = 'bg-slate-700/60 border border-slate-600 rounded-xl p-4 text-sm space-y-3';
@@ -183,19 +178,19 @@
             <!-- ပုံများ ကြည့်ရှုစစ်ဆေးရန် အကွက် -->
             <div class="grid grid-cols-2 gap-2 pt-1">
               <a href="${order.slip_image_url}" target="_blank" class="block bg-slate-800 p-2 rounded-lg text-center hover:bg-slate-900 border border-slate-600">
-                <span class="text-[11px] text-amber-400 block mb-1">📄 ငွေလွှဲစလစ် (ဖွင့်ကြည့်ရန်)</span>
+                <span class="text-[11px] text-amber-400 block mb-1">📄 ငွေလွှဲစလစ်</span>
                 <img src="${order.slip_image_url}" class="h-20 w-full object-cover rounded">
               </a>
               <a href="${order.ticket_image_url}" target="_blank" class="block bg-slate-800 p-2 rounded-lg text-center hover:bg-slate-900 border border-slate-600">
-                <span class="text-[11px] text-emerald-400 block mb-1">🎟️ ထီလက်မှတ် (ဖွင့်ကြည့်ရန်)</span>
+                <span class="text-[11px] text-emerald-400 block mb-1">🎟️ ထီလက်မှတ်</span>
                 <img src="${order.ticket_image_url}" class="h-20 w-full object-cover rounded">
               </a>
             </div>
 
-            <!-- 1-Click Telegram Direct Send ခလုတ် -->
-            <a href="${tgDeepLink}" target="_blank" class="block w-full text-center bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl text-xs shadow transition flex items-center justify-center gap-1.5">
-              <span>👉</span> ဝယ်သူ၏ Telegram ဖွင့်ပြီး လက်မှတ်ပို့မည်
-            </a>
+            <!-- ဓာတ်ပုံအစစ်အား Share ပို့မည့် ခလုတ် -->
+            <button onclick="shareTicketPhoto('${order.ticket_image_url}', '${order.ticket_number}')" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl text-xs shadow transition flex items-center justify-center gap-1.5">
+              <span>📲</span> ဓာတ်ပုံအစစ်ကို Telegram သို့ Share ပို့မည်
+            </button>
 
             <!-- ပို့ပြီးစီးကြောင်း အတည်ပြုခလုတ် -->
             <button onclick="markAsDelivered('${order.id}', '${order.ticket_id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition">
@@ -209,8 +204,30 @@
       }
     }
 
+    // ဓာတ်ပုံအစစ် (File) ကို Telegram သို့ တိုက်ရိုက် Share ပို့ပေးသည့် Function
+    async function shareTicketPhoto(imageUrl, ticketNumber) {
+      try {
+        const res = await fetch(imageUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `Ticket_${ticketNumber}.jpg`, { type: 'image/jpeg' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `ထိုင်းထီလက်မှတ် - ${ticketNumber}`,
+            text: `ထိုင်းထီလက်မှတ်နံပါတ်: ${ticketNumber}\nကံထူးပါစေခင်ဗျာ!`
+          });
+        } else {
+          // Share မရပါက ပုံကို Save လုပ်နိုင်ရန် ဖွင့်ပေးခြင်း
+          window.open(imageUrl, '_blank');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     async function markAsDelivered(orderId, ticketId) {
-      if (!confirm(`Order [${orderId}] အား လက်မှတ်ပို့ပြီးစီးကြောင်း အတည်ပြုမည် သေချာပါသလား?`)) return;
+      if (!confirm(`Order [${orderId}] အား ပို့ဆောင်ပြီးစီးကြောင်း အတည်ပြုမည် သေချာပါသလား?`)) return;
 
       try {
         const res = await fetch('/api/admin/complete-order', {
