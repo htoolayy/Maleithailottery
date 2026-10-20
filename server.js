@@ -11,7 +11,6 @@ app.use(express.static('public'));
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ================= Configurations (ထည့်သွင်းပြီး) =================
 const SUPABASE_URL = 'https://djwylstufwdlihvkwlvc.supabase.co';
 const SUPABASE_SERVICE_KEY = 'sb_secret_X1ZfpBTRVBD68pwqEfwpuQ_g_9knOsO';
 const TELEGRAM_TOKEN = '8747508487:AAFEVj_W3lHjekUEIZWr_xOsspkkLCYCrH4';
@@ -19,19 +18,17 @@ const TELEGRAM_TOKEN = '8747508487:AAFEVj_W3lHjekUEIZWr_xOsspkkLCYCrH4';
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
-// Telegram Bot /start စာပို့လာသူများ၏ Chat ID ကို အလိုအလျောက် မှတ်သားခြင်း
 bot.onText(/\/start (.+)/, async (msg, match) => {
   try {
     const chatId = msg.chat.id;
     const orderId = match[1];
     await supabase.from('orders').update({ telegram_chat_id: chatId.toString() }).eq('id', orderId);
-    bot.sendMessage(chatId, `မင်္ဂလာပါခင်ဗျာ၊ အော်ဒါ [${orderId}] ကို ချိတ်ဆက်ပြီးပါပြီ။ ငွေလွှဲအတည်ပြုပြီးသည်နှင့် ထီလက်မှတ်ပုံကို ဤနေရာသို့ ပို့ပေးပါမည်။`);
+    bot.sendMessage(chatId, `Order [${orderId}] confirmed. Ticket will be sent once payment is verified.`);
   } catch (err) {
     console.error('Bot start error:', err);
   }
 });
 
-// ထီလက်မှတ်ပုံနှင့် စာသား ခွဲပို့ပေးသည့် Function
 async function deliverTicket(order) {
   const { data: fileData, error: urlError } = await supabase.storage
     .from('ticket-images')
@@ -40,15 +37,120 @@ async function deliverTicket(order) {
   if (urlError) throw urlError;
 
   const ticketImageUrl = fileData.signedUrl;
-  const textMsg = `${order.ticket_number} နံပါတ်ကို ကံစမ်းထားပါသည်၊ ကံထူးပါစေခင်ဗျာ။`;
+  const textMsg = `${order.ticket_number} - Thank you and good luck!`;
 
   if (order.telegram_chat_id) {
-    // ၁။ လက်မှတ်ပုံ အရင်ပို့မည်
     await bot.sendPhoto(order.telegram_chat_id, ticketImageUrl);
-    // ၂။ ရှာဖွေရလွယ်စေမည့် စာသား သီးသန့်ထပ်ပို့မည်
     await bot.sendMessage(order.telegram_chat_id, textMsg);
   }
 
-  // Database တွင် Status ပြောင်းလဲခြင်း
   await supabase.from('orders').update({ status: 'delivered' }).eq('id', order.id);
-  await supabase.from('tickets').update({ status: 'sold
+  await supabase.from('tickets').update({ status: 'sold' }).eq('id', order.ticket_id);
+}
+
+app.post('/api/admin/auto-upload', upload.single('ticket_image'), async (req, res) => {
+  try {
+    const { ticket_number } = req.body;
+    if (!ticket_number || !req.file) {
+      return res.status(400).json({ error: 'Missing parameters' });
+    }
+    const fileName = `${Date.now()}_${ticket_number}.jpg`;
+
+    const { error: storageError } = await supabase.storage
+      .from('ticket-images')
+      .upload(fileName, req.file.buffer, { contentType: 'image/jpeg' });
+
+    if (storageError) throw storageError;
+
+    const { error: dbError } = await supabase
+      .from('tickets')
+      .insert([{ ticket_number, image_path: fileName, status: 'available' }]);
+
+    if (dbError) throw dbError;
+
+    res.json({ success: true, message: 'Uploaded successfully' });
+  } catch (err) {
+    console.error('Upload Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/tickets', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('id, ticket_number, price')
+      .eq('status', 'available');
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/create-order', async (req, res) => {
+  try {
+    const { order_id, ticket_id, ticket_number, channel, payment_method } = req.body;
+    const { error } = await supabase.from('orders').insert([{
+      id: order_id,
+      ticket_id,
+      ticket_number,
+      channel: channel || 'telegram',
+      payment_method: payment_method || 'kpay',
+      status: 'pending'
+    }]);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/payment-notification', async (req, res) => {
+  try {
+    const { notification_text } = req.body;
+    console.log('Noti received:', notification_text);
+
+    const match = (notification_text || '').match(/ORD\d{6}/i);
+    if (!match) return res.send('No Order ID matched');
+
+    const orderId = match[0].toUpperCase();
+    const { data: order } = await supabase
+      .from('orders')
+      .select('*, tickets(*)')
+      .eq('id', orderId)
+      .eq('status', 'pending')
+      .single();
+
+    if (order) {
+      await deliverTicket(order);
+      return res.json({ success: true, message: `Order ${orderId} delivered auto!` });
+    }
+    res.send('Order not found or already processed');
+  } catch (err) {
+    console.error('Noti processing error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/payment-webhook', async (req, res) => {
+  try {
+    const { order_id } = req.body;
+    const { data: order } = await supabase
+      .from('orders')
+      .select('*, tickets(*)')
+      .eq('id', order_id)
+      .single();
+
+    if (order) {
+      await deliverTicket(order);
+      return res.json({ success: true });
+    }
+    res.status(404).json({ error: 'Order not found' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
