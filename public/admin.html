@@ -3,79 +3,138 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - ထီလက်မှတ် စာရင်းသွင်းစနစ်</title>
+  <title>Admin - ထီလက်မှတ် စာရင်းသွင်းစနစ် (Auto OCR)</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- စာသားအလိုအလျောက်ဖတ်ပေးမည့် OCR Library -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen p-4 font-sans">
   <div class="max-w-md mx-auto bg-slate-800 rounded-2xl shadow-xl p-5 border border-slate-700">
-    <h1 class="text-xl font-bold text-center text-amber-400 mb-1">Admin Panel</h1>
-    <p class="text-xs text-slate-400 text-center mb-4">ထီလက်မှတ် ဓာတ်ပုံရိုက်၍ တိုက်ရိုက်တင်သွင်းခြင်း</p>
+    <h1 class="text-xl font-bold text-center text-amber-400 mb-1">Admin Scan Panel</h1>
+    <p class="text-xs text-slate-400 text-center mb-4">ထီနံပါတ်ကို ဘောင်အတွင်းချိန်၍ Scan ဖတ်ပါ</p>
 
     <!-- ကင်မရာ ပြသမည့် နေရာ -->
-    <div class="relative bg-black rounded-xl overflow-hidden aspect-[4/3] mb-4 flex items-center justify-center border-2 border-dashed border-slate-600">
-      <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
+    <div class="relative bg-black rounded-xl overflow-hidden aspect-[4/3] mb-4 flex items-center justify-center border-2 border-slate-600">
+      <video id="video" autoplay playsinline muted class="w-full h-full object-cover"></video>
       <canvas id="canvas" class="hidden"></canvas>
-      <div id="cam-overlay" class="absolute inset-0 border-2 border-amber-400/50 m-4 rounded-lg pointer-events-none flex items-center justify-center">
-        <span class="text-xs text-amber-200/70 bg-black/50 px-2 py-1 rounded">ထီလက်မှတ်ကို ဘောင်ထဲ အံဝင်အောင် ချိန်ပါ</span>
+      <canvas id="ocr-crop-canvas" class="hidden"></canvas>
+
+      <!-- အလယ်တည့်တည့်ရှိ နံပါတ်ချိန်ရမည့် ဘောင်လေး -->
+      <div id="scan-frame" class="absolute w-3/4 h-16 border-2 border-amber-400 rounded-lg pointer-events-none flex items-center justify-center shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]">
+        <span class="text-[11px] text-amber-200 bg-black/60 px-2 py-0.5 rounded">ထီနံပါတ် ၆ လုံးကို ဤဘောင်ထဲ ချိန်ပါ</span>
       </div>
     </div>
 
     <!-- ထိန်းချုပ်ခလုတ်များနှင့် အချက်အလက် -->
     <div class="space-y-3">
       <div>
-        <label class="block text-xs text-slate-300 mb-1">ထီနံပါတ် (၆ လုံး):</label>
-        <input type="text" id="ticket-number" maxlength="6" placeholder="ဥပမာ - 597284" 
-               class="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-2.5 text-lg font-mono font-bold text-center tracking-widest text-amber-300 focus:outline-none focus:border-amber-400">
+        <label class="block text-xs text-slate-300 mb-1">စကန်ဖတ်ထားသော ထီနံပါတ်:</label>
+        <input type="text" id="ticket-number" maxlength="6" placeholder="Scan ဖတ်ပါ (သို့) ရိုက်ထည့်ပါ" 
+               class="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-2.5 text-xl font-mono font-bold text-center tracking-widest text-amber-300 focus:outline-none focus:border-amber-400">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
-        <button onclick="startCamera()" class="bg-slate-700 hover:bg-slate-600 text-white font-medium py-2.5 rounded-xl text-sm transition">
-          📷 ကင်မရာ ဖွင့်မည်
+        <!-- OCR ဖြင့် နံပါတ် အလိုအလျောက်ဖတ်မည့် ခလုတ် -->
+        <button onclick="scanTicketNumber()" id="btn-scan" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl text-sm shadow transition flex items-center justify-center gap-1">
+          🔍 နံပါတ် Scan ဖတ်မည်
         </button>
-        <button onclick="captureAndUpload()" id="btn-upload" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-xl text-sm shadow transition">
-          🚀 ဓာတ်ပုံရိုက်ပြီး တင်မည်
+
+        <!-- ဓာတ်ပုံရိုက်ပြီး Supabase သို့ တင်မည့် ခလုတ် -->
+        <button onclick="captureAndUpload()" id="btn-upload" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-xl text-sm shadow transition flex items-center justify-center gap-1">
+          🚀 ဓာတ်ပုံတင်မည်
         </button>
       </div>
 
-      <div id="status-msg" class="text-xs text-center font-medium mt-2 py-1.5 px-3 rounded-lg hidden"></div>
+      <div id="status-msg" class="text-xs text-center font-medium mt-2 py-2 px-3 rounded-lg hidden"></div>
     </div>
   </div>
 
   <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
+    const ocrCanvas = document.getElementById('ocr-crop-canvas');
     const ticketInput = document.getElementById('ticket-number');
     const statusMsg = document.getElementById('status-msg');
+    const btnScan = document.getElementById('btn-scan');
     const btnUpload = document.getElementById('btn-upload');
     let stream = null;
 
-    // ကင်မရာ စတင်ဖွင့်ခြင်း
+    // မြန်မာဂဏန်းများကို အင်္ဂလိပ်ဂဏန်းသို့ အလိုအလျောက် ပြောင်းပေးသည့် Function
+    function convertToEngDigits(str) {
+      const myanDigits = ['၀','၁','၂','၃','၄','၅','၆','၇','၈','၉'];
+      return str.replace(/[၀-၉]/g, d => myanDigits.indexOf(d));
+    }
+
+    // ကင်မရာ စတင်ဖွင့်လှစ်ခြင်း
     async function startCamera() {
       try {
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
+        if (stream) stream.getTracks().forEach(track => track.stop());
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false
         });
         video.srcObject = stream;
-        showStatus('ကင်မရာ အသင့်ဖြစ်ပါပြီ', 'bg-blue-900/60 text-blue-300');
+        showStatus('ကင်မရာ အသင့်ဖြစ်ပါပြီ။ နံပါတ်ကို ဘောင်ထဲချိန်ပြီး Scan နှိပ်ပါ', 'bg-blue-900/60 text-blue-300');
       } catch (err) {
         showStatus('ကင်မရာ ဖွင့်မရပါ: ' + err.message, 'bg-red-900/60 text-red-300');
       }
     }
 
-    // ဓာတ်ပုံ Capture လုပ်ပြီး Server သို့ တင်ပို့ခြင်း
-    async function captureAndUpload() {
-      const ticketNum = ticketInput.value.trim();
-      if (!ticketNum || ticketNum.length !== 6) {
-        showStatus('ထီနံပါတ် ၆ လုံး ပြည့်စုံစွာ ရိုက်ထည့်ပေးပါ', 'bg-red-900/60 text-red-300');
+    // ဘောင်ထဲမှ နံပါတ်ကို OCR ဖြင့် အလိုအလျောက် ဖြတ်ယူဖတ်ခြင်း
+    async function scanTicketNumber() {
+      if (!video.videoWidth) {
+        showStatus('ကင်မရာ ဖွင့်ထားခြင်း မရှိသေးပါ', 'bg-red-900/60 text-red-300');
         return;
       }
 
-      if (!video.videoWidth) {
-        showStatus('ကင်မရာကို အရင်ဖွင့်ထားပေးပါ', 'bg-amber-900/60 text-amber-300');
+      btnScan.disabled = true;
+      btnScan.innerText = 'ဖတ်နေပါသည်...';
+      showStatus('နံပါတ်ကို စကန်ဖတ်နေပါသည်၊ ခေတ္တစောင့်ပါ...', 'bg-sky-900/60 text-sky-200');
+
+      try {
+        // အလယ်ဘောင်တည့်တည့်ရှိ အပိုင်းကိုသာ သီးသန့် ဖြတ်ထုတ်ခြင်း (Crop)
+        const cropWidth = video.videoWidth * 0.75;
+        const cropHeight = video.videoHeight * 0.25;
+        const cropX = (video.videoWidth - cropWidth) / 2;
+        const cropY = (video.videoHeight - cropHeight) / 2;
+
+        ocrCanvas.width = cropWidth;
+        ocrCanvas.height = cropHeight;
+        const ctx = ocrCanvas.getContext('2d');
+        ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+        // Tesseract OCR ဖြင့် အသိအမှတ်ပြုခြင်း
+        const result = await Tesseract.recognize(ocrCanvas, 'eng', {
+          tessedit_char_whitelist: '0123456789၀၁၂၃၄၅၆၇၈၉'
+        });
+
+        let scannedText = convertToEngDigits(result.data.text || '');
+        let cleanDigits = scannedText.replace(/\D/g, '');
+
+        if (cleanDigits.length >= 6) {
+          // ဂဏန်း ၆ လုံး ရရှိပါက အကွက်ထဲ အလိုအလျောက် ထည့်သွင်းခြင်း
+          ticketInput.value = cleanDigits.slice(0, 6);
+          showStatus(`နံပါတ် [${ticketInput.value}] ဖတ်ပြီးပါပြီ။ အတည်ပြုပြီးပါက 'ဓာတ်ပုံတင်မည်' နှိပ်ပါ`, 'bg-emerald-900/70 text-emerald-200');
+        } else if (cleanDigits.length > 0) {
+          ticketInput.value = cleanDigits;
+          showStatus(`နံပါတ် အချို့သာ ဖတ်မိပါသည် (${cleanDigits})၊ လိုအပ်ပါက လက်ဖြင့် ဖြည့်စွက်ပေးပါ`, 'bg-amber-900/60 text-amber-200');
+        } else {
+          showStatus('နံပါတ် မဖတ်မိပါ။ လက်မှတ်ကို ကင်မရာနှင့် ပိုမိုနီးကပ်စွာ ချိန်ပေးပါ', 'bg-red-900/60 text-red-300');
+        }
+      } catch (err) {
+        console.error(err);
+        showStatus('Scan ဖတ်ရာတွင် အမှားဖြစ်သွားပါသည်', 'bg-red-900/60 text-red-300');
+      } finally {
+        btnScan.disabled = false;
+        btnScan.innerText = '🔍 နံပါတ် Scan ဖတ်မည်';
+      }
+    }
+
+    // ဓာတ်ပုံရိုက်၍ Database သို့ ပေးပို့ခြင်း
+    async function captureAndUpload() {
+      const ticketNum = ticketInput.value.trim();
+      if (!ticketNum || ticketNum.length !== 6) {
+        showStatus('ထီနံပါတ် ၆ လုံး ပြည့်စုံစွာ ဖြည့်သွင်းပေးပါ', 'bg-red-900/60 text-red-300');
         return;
       }
 
@@ -83,7 +142,7 @@
       btnUpload.innerText = 'တင်သွင်းနေပါသည်...';
       showStatus('ဓာတ်ပုံ သိမ်းဆည်းနေပါသည်...', 'bg-blue-900/60 text-blue-300');
 
-      // Frame ကို ဓာတ်ပုံအဖြစ် Capture လုပ်ခြင်း
+      // လက်မှတ်ဓာတ်ပုံ အပြည့်အစုံကို Capture လုပ်ခြင်း
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
@@ -102,7 +161,7 @@
           const result = await res.json();
 
           if (result.success) {
-            showStatus(`လက်မှတ် [${ticketNum}] အောင်မြင်စွာ တင်ပြီးပါပြီ!`, 'bg-emerald-900/60 text-emerald-300');
+            showStatus(`လက်မှတ် [${ticketNum}] အောင်မြင်စွာ တင်ပြီးပါပြီ!`, 'bg-emerald-900/70 text-emerald-300');
             ticketInput.value = '';
           } else {
             showStatus('တင်၍ မရပါ: ' + (result.error || 'Server error'), 'bg-red-900/60 text-red-300');
@@ -111,18 +170,17 @@
           showStatus('ချိတ်ဆက်မှု အမှားဖြစ်နေပါသည်', 'bg-red-900/60 text-red-300');
         } finally {
           btnUpload.disabled = false;
-          btnUpload.innerText = '🚀 ဓာတ်ပုံရိုက်ပြီး တင်မည်';
+          btnUpload.innerText = '🚀 ဓာတ်ပုံတင်မည်';
         }
       }, 'image/jpeg', 0.85);
     }
 
     function showStatus(text, classes) {
-      statusMsg.className = `text-xs text-center font-medium mt-2 py-1.5 px-3 rounded-lg ${classes}`;
+      statusMsg.className = `text-xs text-center font-medium mt-2 py-2 px-3 rounded-lg ${classes}`;
       statusMsg.innerText = text;
       statusMsg.classList.remove('hidden');
     }
 
-    // စာမျက်နှာ စဖွင့်သည်နှင့် ကင်မရာ အလိုအလျောက် ဖွင့်ရန်
     window.addEventListener('load', startCamera);
   </script>
 </body>
