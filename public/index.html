@@ -86,7 +86,7 @@
 
           <div class="pt-1">
             <div class="text-[11px] text-amber-800 font-medium mb-1">
-              * ငွေလွှဲရာတွင် Note (မှတ်ချက်) ၌ ဤ <b>Order ID</b> ကို ထည့်ပေးပါ:
+              * ငွေလွှဲရာတွင် Note (မှတ်ချက်) ၌ ဤ <b>Order ID</b> ကို ထည့်သွင်းပေးပါ:
             </div>
             <div class="flex gap-2">
               <div id="display-order-id" class="flex-1 bg-white border border-purple-300 text-purple-700 font-mono font-bold text-center py-2 rounded-lg text-base"></div>
@@ -100,9 +100,10 @@
         <!-- ဝယ်သူ အချက်အလက်ဖြည့်ပြီး စလစ်တင်ရန် -->
         <div class="space-y-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">သင့် Telegram အကောင့် (Username သို့မဟုတ် ဖုန်း):</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">သင့် Telegram (@username) သို့မဟုတ် ဖုန်း/Viber နံပါတ်:</label>
             <input type="text" id="cust-contact" placeholder="ဥပမာ - @username (သို့) 09..." 
                    class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-500 bg-slate-50">
+            <span class="text-[11px] text-slate-400 mt-1 block">* Telegram Username မသိပါက ဖုန်းနံပါတ် (09...) ကို ရိုက်ထည့်နိုင်ပါသည်</span>
           </div>
 
           <div>
@@ -118,43 +119,64 @@
 
       </div>
 
+      <!-- ဝယ်ယူပြီးနောက် အောင်မြင်ကြောင်းနှင့် Admin ထံ ဆက်သွယ်ရန် Modal -->
+      <div id="success-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-5 max-w-sm w-full text-center space-y-4 shadow-2xl">
+          <div class="text-4xl">🎉</div>
+          <h3 class="text-lg font-bold text-slate-800">အော်ဒါတင်ခြင်း အောင်မြင်ပါသည်!</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Order ID: <b id="modal-order-id" class="text-purple-700 font-mono text-sm"></b> အတွက် စလစ်ပေးပို့ပြီးပါပြီ။<br>
+            ထီလက်မှတ်ပုံကို ပိုမိုမြန်ဆန်စွာ ရယူနိုင်ရန် Admin ထံ တိုက်ရိုက် စာပို့နိုင်ပါသည်ခင်ဗျာ။
+          </p>
+
+          <div class="space-y-2 pt-2">
+            <a id="btn-contact-tg" href="#" target="_blank" class="block w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl text-xs transition">
+              👉 Telegram ဖြင့် Admin ထံ စာပို့မည်
+            </a>
+            <a id="btn-contact-viber" href="#" target="_blank" class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl text-xs transition">
+              💬 Viber ဖြင့် Admin ထံ စာပို့မည်
+            </a>
+          </div>
+
+          <button onclick="location.reload()" class="w-full border border-slate-300 text-slate-600 py-2 rounded-xl text-xs font-semibold hover:bg-slate-50">
+            ပိတ်မည်
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script>
+    // Admin ဆက်သွယ်ရန် အချက်အလက်များ
+    const ADMIN_PHONE = '09975191980';
+    const ADMIN_VIBER = '959975191980'; // International format
+    const ADMIN_TG_PHONE = '+959975191980';
+
     let currentOrderId = '';
     let selectedTicket = null;
     let allTickets = [];
 
-    // ဒေတာဆွဲယူခြင်း (Cache မငြိစေရန် timestamp ထည့်ထားသည်)
     async function loadTickets() {
       const container = document.getElementById('tickets-container');
       try {
         const res = await fetch('/api/tickets?t=' + Date.now());
         const data = await res.json();
-
-        if (!res.ok || data.error) {
-          container.innerHTML = `<div class="col-span-2 text-center text-red-500 py-6 text-xs">Error: ${data.error || 'ဒေတာဆွဲယူ၍ မရပါ'}</div>`;
-          return;
-        }
-
         allTickets = Array.isArray(data) ? data : [];
         renderTickets(allTickets);
       } catch (err) {
-        container.innerHTML = `<div class="col-span-2 text-center text-red-500 py-6 text-xs">ချိတ်ဆက်မှု မရပါ: ${err.message}</div>`;
+        container.innerHTML = '<div class="col-span-2 text-center text-red-500 py-6 text-xs">လက်မှတ်များ ဆွဲယူ၍ မရပါ</div>';
       }
     }
 
-    // လက်မှတ်များအား စာမျက်နှာတွင် ဖော်ပြပေးခြင်း
     function renderTickets(tickets) {
       const container = document.getElementById('tickets-container');
       const countEl = document.getElementById('ticket-count');
       container.innerHTML = '';
-
       countEl.innerText = `${tickets.length} စောင် ရနိုင်ပါသည်`;
 
       if (tickets.length === 0) {
-        container.innerHTML = '<div class="col-span-2 text-center text-slate-400 py-8 text-xs font-medium">ရှာဖွေထားသော ဂဏန်းနှင့် ကိုက်ညီသည့် လက်မှတ် မရှိပါခင်ဗျာ။</div>';
+        container.innerHTML = '<div class="col-span-2 text-center text-slate-400 py-8 text-xs font-medium">လက်မှတ် မရှိပါခင်ဗျာ။</div>';
         return;
       }
 
@@ -175,20 +197,10 @@
       });
     }
 
-    // Search Bar တွင် ဂဏန်းအစ (သို့) နံပါတ် စစ်ထုတ်ရှာဖွေခြင်း
     function filterTickets() {
-      const input = document.getElementById('search-input');
-      const clearBtn = document.getElementById('clear-btn');
-      const query = input.value.trim();
-
-      clearBtn.classList.toggle('hidden', query.length === 0);
-
-      if (!query) {
-        renderTickets(allTickets);
-        return;
-      }
-
-      // ဂဏန်းအစဖြင့် ရှာဖွေခြင်း သို့မဟုတ် ဂဏန်းပါဝင်မှုဖြင့် ရှာဖွေခြင်း
+      const query = document.getElementById('search-input').value.trim();
+      document.getElementById('clear-btn').classList.toggle('hidden', query.length === 0);
+      if (!query) return renderTickets(allTickets);
       const filtered = allTickets.filter(t => 
         String(t.ticket_number).startsWith(query) || String(t.ticket_number).includes(query)
       );
@@ -227,7 +239,7 @@
       const btn = document.getElementById('btn-submit');
 
       if (!contact) {
-        alert('သင့် Telegram အကောင့် (သို့မဟုတ် ဖုန်းနံပါတ်) ထည့်သွင်းပေးပါခင်ဗျာ');
+        alert('သင့် Telegram သို့မဟုတ် ဖုန်းနံပါတ် ဖြည့်သွင်းပေးပါခင်ဗျာ');
         return;
       }
       if (!fileInput.files || fileInput.files.length === 0) {
@@ -249,8 +261,16 @@
         const res = await fetch('/api/submit-order', { method: 'POST', body: formData });
         const data = await res.json();
         if (data.success) {
-          alert('အော်ဒါတင်ခြင်း အောင်မြင်ပါသည်ခင်ဗျာ!\n\nAdmin မှ ငွေလွှဲစစ်ဆေးပြီးပါက သင်၏ Telegram သို့ မူရင်းထီလက်မှတ်ပုံ လာရောက်ပေးပို့ပါမည်။');
-          location.reload();
+          // Modal ပြသပြီး Admin ထံ 1-Click စာပို့ခလုတ်များ ချိတ်ပေးခြင်း
+          const prefillText = encodeURIComponent(`မင်္ဂလာပါ၊ ကျွန်တော် ထိုင်းထီ ထိုးထားတဲ့ Order ID: ${currentOrderId} (${selectedTicket.ticket_number}) အတွက် စလစ်ပို့ထားပြီးပါပြီခင်ဗျာ။`);
+          
+          document.getElementById('modal-order-id').innerText = currentOrderId;
+          document.getElementById('btn-contact-tg').href = `https://t.me/${ADMIN_TG_PHONE}?text=${prefillText}`;
+          document.getElementById('btn-contact-viber').href = `viber://chat?number=%2B${ADMIN_VIBER}&draft=${prefillText}`;
+
+          const modal = document.getElementById('success-modal');
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
         } else {
           alert('မအောင်မြင်ပါ: ' + (data.error || 'အမှားရှိနေပါသည်'));
         }
