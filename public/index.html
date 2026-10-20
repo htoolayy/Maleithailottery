@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>အွန်လိုင်း ထီလက်မှတ် အရောင်း</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 font-sans">
+  <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6">
+    <h1 class="text-2xl font-bold text-center text-blue-600 mb-2">ထိုင်းထီ လက်မှတ်များ</h1>
+    <p class="text-sm text-gray-500 text-center mb-6">မိမိစိတ်ကြိုက် နံပါတ်ရွေးချယ် ဝယ်ယူနိုင်ပါသည်</p>
+
+    <!-- လက်မှတ်များ စာရင်း -->
+    <div id="tickets-container" class="grid grid-cols-2 gap-3 mb-6">
+      <div class="col-span-2 text-center text-gray-400 py-6">လက်မှတ်များ ရှာဖွေနေပါသည်...</div>
+    </div>
+
+    <!-- အော်ဒါအချက်အလက် Modal / အကွက် -->
+    <div id="checkout-box" class="hidden border-t pt-4">
+      <div class="bg-blue-50 p-4 rounded-xl mb-4 border border-blue-200">
+        <h3 class="font-bold text-gray-800 mb-2">ငွေပေးချေမှု အချက်အလက်</h3>
+        <p class="text-sm text-gray-600">ရွေးချယ်ထားသော နံပါတ်: <span id="selected-ticket-num" class="font-bold text-blue-600"></span></p>
+        <p class="text-sm text-gray-600">ကျသင့်ငွေ: <span class="font-bold text-red-500">1,000 ကျပ်</span></p>
+        <p class="text-sm text-gray-600 mt-2 font-semibold">အော်ဒါနံပါတ် (Order ID):</p>
+        <div id="display-order-id" class="text-xl font-mono font-bold text-purple-700 bg-white p-2 rounded text-center border my-1"></div>
+        <p class="text-xs text-red-600 mt-1">* KPay / WavePay ဖြင့် ငွေလွှဲရာတွင် Note (မှတ်ချက်) ၌ အထက်ပါ Order ID ကို မဖြစ်မနေ ထည့်သွင်းပေးပါခင်ဗျာ။</p>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Telegram Bot သို့ သွားမည့် ခလုတ် -->
+        <a id="telegram-link" href="#" target="_blank" class="block w-
