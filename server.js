@@ -11,8 +11,9 @@ app.use(express.static('public'));
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+// ================= Configurations (Key အမှန် ထည့်သွင်းပြီး) =================
 const SUPABASE_URL = 'https://djwylstufwdlihvkwlvc.supabase.co';
-const SUPABASE_SERVICE_KEY = 'sb_secret_X1ZfpBTRVBD68pwqEfwpuQ_g_9knOsO';
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqd3lsc3R1ZndkbGlodmt3bHZjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjQ3NTM2OSwiZXhwIjoyMTA4MDUxMzY5fQ.VQNHopek07QEmmP_J7giWm7wlUr_Eyq1rSVLsNoaCes';
 const TELEGRAM_TOKEN = '8747508487:AAFEVj_W3lHjekUEIZWr_xOsspkkLCYCrH4';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -48,7 +49,7 @@ async function deliverTicket(order) {
   await supabase.from('tickets').update({ status: 'sold' }).eq('id', order.ticket_id);
 }
 
-// ထီလက်မှတ်နှင့် စျေးနှုန်း အသစ်တင်သွင်းသည့် API
+// ထီလက်မှတ်နှင့် စျေးနှုန်း တင်သွင်းသည့် API
 app.post('/api/admin/auto-upload', upload.single('ticket_image'), async (req, res) => {
   try {
     const { ticket_number, price } = req.body;
