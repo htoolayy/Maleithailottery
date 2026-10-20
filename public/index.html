@@ -11,19 +11,34 @@
     
     <!-- Header -->
     <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 text-white text-center">
-      <h1 class="text-2xl font-black tracking-wide">🇲🇲 ထိုင်းထီ အရောင်း 🇹🇭</h1>
+      <h1 class="text-2xl font-black tracking-wide">🇲🇲 မလေး ထိုင်းထီ အရောင်း 🇹🇭</h1>
       <p class="text-xs text-blue-100 mt-1">အွန်လိုင်းမှ စိတ်ကြိုက်နံပါတ် ရွေးချယ်ဝယ်ယူနိုင်ပါသည်</p>
     </div>
 
     <div class="p-4 md:p-5">
-      <!-- ရောင်းရန်ရှိသော ထီလက်မှတ်များ -->
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-sm font-bold text-slate-800">ရွေးချယ်နိုင်သော ထီလက်မှတ်များ</h2>
-        <span class="text-xs text-slate-400">နံပါတ်ကို နှိပ်၍ ဝယ်ယူပါ</span>
+
+      <!-- 🔍 ထီနံပါတ် ရှာဖွေရန် Search Bar -->
+      <div class="mb-4">
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">🔍 ထီနံပါတ် ရှာဖွေရန်:</label>
+        <div class="relative">
+          <input type="text" id="search-input" inputmode="numeric" maxlength="6"
+                 placeholder="ဂဏန်းအစ (သို့) နံပါတ် ရိုက်ရှာပါ..." 
+                 oninput="filterTickets()"
+                 class="w-full bg-slate-50 border-2 border-blue-400 rounded-xl pl-10 pr-10 py-2.5 text-base font-mono font-bold tracking-widest text-slate-800 placeholder:text-xs placeholder:font-normal placeholder:tracking-normal focus:outline-none focus:bg-white focus:border-indigo-600 transition">
+          <span class="absolute left-3.5 top-3 text-slate-400 text-sm pointer-events-none">🔢</span>
+          <button onclick="clearSearch()" id="clear-btn" class="hidden absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-sm font-bold bg-slate-200 rounded-full w-5 h-5 flex items-center justify-center">✕</button>
+        </div>
       </div>
 
-      <div id="tickets-container" class="grid grid-cols-2 gap-3 mb-6">
-        <div class="col-span-2 text-center text-slate-400 py-6 text-sm">လက်မှတ်များ ရှာဖွေနေပါသည်...</div>
+      <!-- ရောင်းရန်ရှိသော ထီလက်မှတ်များ ခေါင်းစဉ် -->
+      <div class="flex justify-between items-center mb-2.5">
+        <h2 class="text-xs font-bold text-slate-700">ရွေးချယ်နိုင်သော ထီလက်မှတ်များ:</h2>
+        <span id="ticket-count" class="text-xs text-indigo-600 font-bold"></span>
+      </div>
+
+      <!-- ထီလက်မှတ်များ ပြသမည့် Grid -->
+      <div id="tickets-container" class="grid grid-cols-2 gap-2.5 mb-6">
+        <div class="col-span-2 text-center text-slate-400 py-8 text-xs font-medium">လက်မှတ်များ ဆွဲယူနေပါသည်...</div>
       </div>
 
       <!-- ဝယ်ယူမှု အချက်အလက်ဖောင် (လက်မှတ်နှိပ်မှ ပေါ်မည်) -->
@@ -40,3 +55,214 @@
             <span id="selected-ticket-type" class="font-semibold text-slate-800"></span>
           </div>
           <div class="flex justify-between items-center text-sm font-bold pt-1 border-t border-blue-100">
+            <span class="text-slate-600">ကျသင့်ငွေ:</span>
+            <span id="selected-ticket-price" class="text-red-600 text-base"></span>
+          </div>
+        </div>
+
+        <!-- ငွေလွှဲရန် အကောင့်များနှင့် Order ID -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+          <div class="text-xs font-bold text-amber-900 border-b border-amber-200 pb-2">
+            💳 ငွေလွှဲရမည့် အကောင့်များ
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-amber-100">
+              <div>
+                <span class="font-bold text-blue-600">KBZPay:</span> 
+                <span class="font-mono font-bold text-slate-800 tracking-wider">09975191980</span>
+              </div>
+              <span class="text-[11px] text-slate-600 font-medium">(U Htoo Aung)</span>
+            </div>
+
+            <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-amber-100">
+              <div>
+                <span class="font-bold text-amber-600">WavePay:</span> 
+                <span class="font-mono font-bold text-slate-800 tracking-wider">09975191980</span>
+              </div>
+              <span class="text-[11px] text-slate-600 font-medium">(U Htoo Aung)</span>
+            </div>
+          </div>
+
+          <div class="pt-1">
+            <div class="text-[11px] text-amber-800 font-medium mb-1">
+              * ငွေလွှဲရာတွင် Note (မှတ်ချက်) ၌ ဤ <b>Order ID</b> ကို ထည့်ပေးပါ:
+            </div>
+            <div class="flex gap-2">
+              <div id="display-order-id" class="flex-1 bg-white border border-purple-300 text-purple-700 font-mono font-bold text-center py-2 rounded-lg text-base"></div>
+              <button onclick="copyOrderId()" type="button" class="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 rounded-lg font-bold transition">
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ဝယ်သူ အချက်အလက်ဖြည့်ပြီး စလစ်တင်ရန် -->
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">သင့် Telegram အကောင့် (Username သို့မဟုတ် ဖုန်း):</label>
+            <input type="text" id="cust-contact" placeholder="ဥပမာ - @username (သို့) 09..." 
+                   class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-500 bg-slate-50">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">ငွေလွှဲပြေစာ (စလစ်) ဓာတ်ပုံ ရွေးချယ်ပါ:</label>
+            <input type="file" id="slip-file" accept="image/*" 
+                   class="w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-300 rounded-xl bg-slate-50">
+          </div>
+
+          <button onclick="submitOrderWithSlip()" id="btn-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow transition text-sm">
+            🚀 အော်ဒါတင်ပြီး စလစ်ပို့မည်
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentOrderId = '';
+    let selectedTicket = null;
+    let allTickets = [];
+
+    // ဒေတာဆွဲယူခြင်း (Cache မငြိစေရန် timestamp ထည့်ထားသည်)
+    async function loadTickets() {
+      const container = document.getElementById('tickets-container');
+      try {
+        const res = await fetch('/api/tickets?t=' + Date.now());
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          container.innerHTML = `<div class="col-span-2 text-center text-red-500 py-6 text-xs">Error: ${data.error || 'ဒေတာဆွဲယူ၍ မရပါ'}</div>`;
+          return;
+        }
+
+        allTickets = Array.isArray(data) ? data : [];
+        renderTickets(allTickets);
+      } catch (err) {
+        container.innerHTML = `<div class="col-span-2 text-center text-red-500 py-6 text-xs">ချိတ်ဆက်မှု မရပါ: ${err.message}</div>`;
+      }
+    }
+
+    // လက်မှတ်များအား စာမျက်နှာတွင် ဖော်ပြပေးခြင်း
+    function renderTickets(tickets) {
+      const container = document.getElementById('tickets-container');
+      const countEl = document.getElementById('ticket-count');
+      container.innerHTML = '';
+
+      countEl.innerText = `${tickets.length} စောင် ရနိုင်ပါသည်`;
+
+      if (tickets.length === 0) {
+        container.innerHTML = '<div class="col-span-2 text-center text-slate-400 py-8 text-xs font-medium">ရှာဖွေထားသော ဂဏန်းနှင့် ကိုက်ညီသည့် လက်မှတ် မရှိပါခင်ဗျာ။</div>';
+        return;
+      }
+
+      tickets.forEach(ticket => {
+        const price = ticket.price || 15000;
+        const isTwin = price === 30000;
+        const div = document.createElement('div');
+        div.className = 'border-2 border-slate-200 rounded-xl p-3 text-center cursor-pointer hover:border-blue-500 bg-slate-50 hover:bg-white transition relative overflow-hidden shadow-sm';
+        div.innerHTML = `
+          <span class="absolute top-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${isTwin ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
+            ${isTwin ? '၂ စောင်တွဲ' : '၁ စောင်တွဲ'}
+          </span>
+          <div class="text-xl font-bold tracking-wider text-slate-800 mt-2 font-mono">${ticket.ticket_number}</div>
+          <div class="text-xs font-semibold text-red-500 mt-1">${Number(price).toLocaleString()} Ks</div>
+        `;
+        div.onclick = () => selectTicket(ticket);
+        container.appendChild(div);
+      });
+    }
+
+    // Search Bar တွင် ဂဏန်းအစ (သို့) နံပါတ် စစ်ထုတ်ရှာဖွေခြင်း
+    function filterTickets() {
+      const input = document.getElementById('search-input');
+      const clearBtn = document.getElementById('clear-btn');
+      const query = input.value.trim();
+
+      clearBtn.classList.toggle('hidden', query.length === 0);
+
+      if (!query) {
+        renderTickets(allTickets);
+        return;
+      }
+
+      // ဂဏန်းအစဖြင့် ရှာဖွေခြင်း သို့မဟုတ် ဂဏန်းပါဝင်မှုဖြင့် ရှာဖွေခြင်း
+      const filtered = allTickets.filter(t => 
+        String(t.ticket_number).startsWith(query) || String(t.ticket_number).includes(query)
+      );
+      renderTickets(filtered);
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('clear-btn').classList.add('hidden');
+      renderTickets(allTickets);
+    }
+
+    function selectTicket(ticket) {
+      selectedTicket = ticket;
+      currentOrderId = 'ORD' + Math.floor(100000 + Math.random() * 900000);
+
+      const price = ticket.price || 15000;
+      document.getElementById('selected-ticket-num').innerText = ticket.ticket_number;
+      document.getElementById('selected-ticket-type').innerText = price === 30000 ? '၂ စောင်တွဲ' : '၁ စောင်တွဲ';
+      document.getElementById('selected-ticket-price').innerText = `${Number(price).toLocaleString()} ကျပ်`;
+      document.getElementById('display-order-id').innerText = currentOrderId;
+
+      document.getElementById('checkout-box').classList.remove('hidden');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function copyOrderId() {
+      if (!currentOrderId) return;
+      navigator.clipboard.writeText(currentOrderId);
+      alert('Order ID ကို Copy ကူးပြီးပါပြီ: ' + currentOrderId);
+    }
+
+    async function submitOrderWithSlip() {
+      const contact = document.getElementById('cust-contact').value.trim();
+      const fileInput = document.getElementById('slip-file');
+      const btn = document.getElementById('btn-submit');
+
+      if (!contact) {
+        alert('သင့် Telegram အကောင့် (သို့မဟုတ် ဖုန်းနံပါတ်) ထည့်သွင်းပေးပါခင်ဗျာ');
+        return;
+      }
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('ငွေလွှဲပြေစာ (စလစ်) ဓာတ်ပုံကို ရွေးချယ်ပေးပါခင်ဗျာ');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'တင်ပို့နေပါသည်...';
+
+      const formData = new FormData();
+      formData.append('order_id', currentOrderId);
+      formData.append('ticket_id', selectedTicket.id);
+      formData.append('ticket_number', selectedTicket.ticket_number);
+      formData.append('customer_contact', contact);
+      formData.append('slip_image', fileInput.files[0]);
+
+      try {
+        const res = await fetch('/api/submit-order', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+          alert('အော်ဒါတင်ခြင်း အောင်မြင်ပါသည်ခင်ဗျာ!\n\nAdmin မှ ငွေလွှဲစစ်ဆေးပြီးပါက သင်၏ Telegram သို့ မူရင်းထီလက်မှတ်ပုံ လာရောက်ပေးပို့ပါမည်။');
+          location.reload();
+        } else {
+          alert('မအောင်မြင်ပါ: ' + (data.error || 'အမှားရှိနေပါသည်'));
+        }
+      } catch (err) {
+        alert('ချိတ်ဆက်မှု အမှားဖြစ်နေပါသည်');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '🚀 အော်ဒါတင်ပြီး စလစ်ပို့မည်';
+      }
+    }
+
+    loadTickets();
+  </script>
+</body>
+</html>
