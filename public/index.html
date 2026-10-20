@@ -8,25 +8,124 @@
 </head>
 <body class="bg-gray-100 min-h-screen p-4 font-sans">
   <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6">
-    <h1 class="text-2xl font-bold text-center text-blue-600 mb-2">ထိုင်းထီ လက်မှတ်များ</h1>
-    <p class="text-sm text-gray-500 text-center mb-6">မိမိစိတ်ကြိုက် နံပါတ်ရွေးချယ် ဝယ်ယူနိုင်ပါသည်</p>
+    <h1 class="text-2xl font-bold text-center text-blue-600 mb-1">ထိုင်းထီ လက်မှတ်များ</h1>
+    <p class="text-xs text-gray-500 text-center mb-6">မိမိစိတ်ကြိုက် နံပါတ်ရွေးချယ် ဝယ်ယူနိုင်ပါသည်</p>
 
     <!-- လက်မှတ်များ စာရင်း -->
     <div id="tickets-container" class="grid grid-cols-2 gap-3 mb-6">
-      <div class="col-span-2 text-center text-gray-400 py-6">လက်မှတ်များ ရှာဖွေနေပါသည်...</div>
+      <div class="col-span-2 text-center text-gray-400 py-6 text-sm">လက်မှတ်များ ရှာဖွေနေပါသည်...</div>
     </div>
 
-    <!-- အော်ဒါအချက်အလက် Modal / အကွက် -->
+    <!-- အော်ဒါအချက်အလက် Modal -->
     <div id="checkout-box" class="hidden border-t pt-4">
       <div class="bg-blue-50 p-4 rounded-xl mb-4 border border-blue-200">
         <h3 class="font-bold text-gray-800 mb-2">ငွေပေးချေမှု အချက်အလက်</h3>
         <p class="text-sm text-gray-600">ရွေးချယ်ထားသော နံပါတ်: <span id="selected-ticket-num" class="font-bold text-blue-600"></span></p>
-        <p class="text-sm text-gray-600">ကျသင့်ငွေ: <span class="font-bold text-red-500">1,000 ကျပ်</span></p>
+        <p class="text-sm text-gray-600">အမျိုးအစား: <span id="selected-ticket-type" class="font-semibold text-gray-700"></span></p>
+        <p class="text-sm text-gray-600">ကျသင့်ငွေ: <span id="selected-ticket-price" class="font-bold text-red-600 text-base"></span></p>
+        
         <p class="text-sm text-gray-600 mt-2 font-semibold">အော်ဒါနံပါတ် (Order ID):</p>
         <div id="display-order-id" class="text-xl font-mono font-bold text-purple-700 bg-white p-2 rounded text-center border my-1"></div>
         <p class="text-xs text-red-600 mt-1">* KPay / WavePay ဖြင့် ငွေလွှဲရာတွင် Note (မှတ်ချက်) ၌ အထက်ပါ Order ID ကို မဖြစ်မနေ ထည့်သွင်းပေးပါခင်ဗျာ။</p>
       </div>
 
       <div class="space-y-3">
-        <!-- Telegram Bot သို့ သွားမည့် ခလုတ် -->
-        <a id="telegram-link" href="#" target="_blank" class="block w-
+        <a id="telegram-link" href="#" target="_blank" class="block w-full text-center bg-sky-500 text-white font-bold py-3 rounded-xl shadow hover:bg-sky-600 transition">
+          👉 Telegram Bot ထဲသို့ ဝင်ရောက်မည်
+        </a>
+        <p class="text-xs text-center text-gray-400">Telegram Bot ထဲရောက်ပါက 'Start' ကို နှိပ်ထားပေးပါ</p>
+
+        <button onclick="testPaymentComplete()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl shadow hover:bg-emerald-700 transition mt-2">
+          ငွေလွှဲပြီးပါပြီ (စမ်းသပ် အတည်ပြုမည်)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TELEGRAM_BOT_USERNAME = 'Maleithailotterybot'; 
+    let currentOrderId = '';
+    let selectedTicket = null;
+
+    async function loadTickets() {
+      try {
+        const res = await fetch('/api/tickets');
+        const tickets = await res.json();
+        const container = document.getElementById('tickets-container');
+        container.innerHTML = '';
+
+        if (!tickets || tickets.length === 0) {
+          container.innerHTML = '<div class="col-span-2 text-center text-gray-400 py-6 text-sm">လက်ရှိတွင် ရောင်းရန် ထီလက်မှတ် မရှိသေးပါခင်ဗျာ။</div>';
+          return;
+        }
+
+        tickets.forEach(ticket => {
+          const price = ticket.price || 15000;
+          const isTwin = price === 30000;
+          const div = document.createElement('div');
+          div.className = 'border-2 border-gray-200 rounded-xl p-3 text-center cursor-pointer hover:border-blue-500 bg-gray-50 hover:bg-white transition relative overflow-hidden';
+          div.innerHTML = `
+            <span class="absolute top-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${isTwin ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
+              ${isTwin ? '၂ စောင်တွဲ' : '၁ စောင်တွဲ'}
+            </span>
+            <div class="text-xl font-bold tracking-wider text-gray-800 mt-2">${ticket.ticket_number}</div>
+            <div class="text-xs font-semibold text-red-500 mt-1">${Number(price).toLocaleString()} Ks</div>
+          `;
+          div.onclick = () => selectTicket(ticket);
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function selectTicket(ticket) {
+      selectedTicket = ticket;
+      currentOrderId = 'ORD' + Math.floor(100000 + Math.random() * 900000);
+
+      const price = ticket.price || 15000;
+      const typeStr = price === 30000 ? '၂ စောင်တွဲ' : '၁ စောင်တွဲ';
+
+      document.getElementById('selected-ticket-num').innerText = ticket.ticket_number;
+      document.getElementById('selected-ticket-type').innerText = typeStr;
+      document.getElementById('selected-ticket-price').innerText = `${Number(price).toLocaleString()} ကျပ်`;
+      document.getElementById('display-order-id').innerText = currentOrderId;
+
+      await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: currentOrderId,
+          ticket_id: ticket.id,
+          ticket_number: ticket.ticket_number,
+          channel: 'telegram'
+        })
+      });
+
+      const tgLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${currentOrderId}`;
+      document.getElementById('telegram-link').href = tgLink;
+
+      document.getElementById('checkout-box').classList.remove('hidden');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    async function testPaymentComplete() {
+      if (!currentOrderId) return;
+      const res = await fetch('/api/payment-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: currentOrderId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('ငွေလွှဲအတည်ပြုပြီးပါပြီ။ Telegram Bot တွင် ထီလက်မှတ်ပုံ ရောက်ရှိမှုကို စစ်ဆေးနိုင်ပါပြီခင်ဗျာ။');
+        location.reload();
+      } else {
+        alert('အတည်ပြု၍ မရသေးပါ: ' + (data.error || 'အမှားရှိနေပါသည်'));
+      }
+    }
+
+    loadTickets();
+  </script>
+</body>
+</html>
