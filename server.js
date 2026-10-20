@@ -23,7 +23,7 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const orderId = match[1];
     await supabase.from('orders').update({ telegram_chat_id: chatId.toString() }).eq('id', orderId);
-    bot.sendMessage(chatId, `Order [${orderId}] confirmed. Ticket will be sent once payment is verified.`);
+    bot.sendMessage(chatId, `Order [${orderId}] ချိတ်ဆက်ပြီးပါပြီ။ ငွေလွှဲအတည်ပြုပြီးပါက ထီလက်မှတ်ပုံ ပို့ပေးပါမည်။`);
   } catch (err) {
     console.error('Bot start error:', err);
   }
@@ -37,7 +37,7 @@ async function deliverTicket(order) {
   if (urlError) throw urlError;
 
   const ticketImageUrl = fileData.signedUrl;
-  const textMsg = `${order.ticket_number} - Thank you and good luck!`;
+  const textMsg = `ထီနံပါတ်: ${order.ticket_number}\nကျသင့်ငွေ: ${order.tickets.price ? Number(order.tickets.price).toLocaleString() : '15,000'} ကျပ်\nကံထူးပါစေခင်ဗျာ။`;
 
   if (order.telegram_chat_id) {
     await bot.sendPhoto(order.telegram_chat_id, ticketImageUrl);
@@ -48,11 +48,12 @@ async function deliverTicket(order) {
   await supabase.from('tickets').update({ status: 'sold' }).eq('id', order.ticket_id);
 }
 
+// ထီလက်မှတ်နှင့် စျေးနှုန်း အသစ်တင်သွင်းသည့် API
 app.post('/api/admin/auto-upload', upload.single('ticket_image'), async (req, res) => {
   try {
-    const { ticket_number } = req.body;
+    const { ticket_number, price } = req.body;
     if (!ticket_number || !req.file) {
-      return res.status(400).json({ error: 'Missing parameters' });
+      return res.status(400).json({ error: 'အချက်အလက် မပြည့်စုံပါ' });
     }
     const fileName = `${Date.now()}_${ticket_number}.jpg`;
 
@@ -62,9 +63,16 @@ app.post('/api/admin/auto-upload', upload.single('ticket_image'), async (req, re
 
     if (storageError) throw storageError;
 
+    const ticketPrice = parseInt(price, 10) || 15000;
+
     const { error: dbError } = await supabase
       .from('tickets')
-      .insert([{ ticket_number, image_path: fileName, status: 'available' }]);
+      .insert([{
+        ticket_number,
+        image_path: fileName,
+        status: 'available',
+        price: ticketPrice
+      }]);
 
     if (dbError) throw dbError;
 
@@ -109,8 +117,6 @@ app.post('/api/create-order', async (req, res) => {
 app.post('/api/payment-notification', async (req, res) => {
   try {
     const { notification_text } = req.body;
-    console.log('Noti received:', notification_text);
-
     const match = (notification_text || '').match(/ORD\d{6}/i);
     if (!match) return res.send('No Order ID matched');
 
