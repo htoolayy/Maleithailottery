@@ -23,7 +23,7 @@ app.post('/api/admin/auto-upload', upload.single('ticket_image'), async (req, re
     if (!ticket_number || !req.file) {
       return res.status(400).json({ error: 'အချက်အလက် မပြည့်စုံပါ' });
     }
-    const fileName = `ticket_${Date.now()}_${ticket_number}.jpg`;
+    const fileName = `t_${Date.now()}_${ticket_number}.jpg`;
 
     const { error: storageError } = await supabase.storage
       .from('ticket-images')
@@ -68,27 +68,31 @@ app.get('/api/tickets', async (req, res) => {
   }
 });
 
-// ၃။ ဝယ်သူမှ ငွေလွှဲစလစ် (Slip) နှင့် Telegram အချက်အလက် တင်သွင်းခြင်း
+// ၃။ ဝယ်သူမှ ငွေလွှဲစလစ် (Slip) တင်သွင်းခြင်း (စာလုံးရေ ၂၀ အောက် အတိုချုံ့ထားသည်)
 app.post('/api/submit-order', upload.single('slip_image'), async (req, res) => {
   try {
     const { order_id, ticket_id, ticket_number, customer_contact } = req.body;
     if (!order_id || !ticket_id || !req.file || !customer_contact) {
-      return res.status(400).json({ error: 'ငွေလွှဲစလစ်နှင့် Telegram အကောင့် အချက်အလက် ပြည့်စုံစွာ ဖြည့်ပေးပါ' });
+      return res.status(400).json({ error: 'အချက်အလက် ပြည့်စုံစွာ ဖြည့်ပေးပါ' });
     }
 
-    const slipFileName = `slip_${Date.now()}_${order_id}.jpg`;
+    // စာလုံးရေ ၂၀ မကျော်စေရန် အမည်တို အသုံးပြုခြင်း
+    const slipFileName = `s_${order_id}.jpg`;
 
     const { error: storageError } = await supabase.storage
       .from('ticket-images')
-      .upload(slipFileName, req.file.buffer, { contentType: 'image/jpeg' });
+      .upload(slipFileName, req.file.buffer, { contentType: 'image/jpeg', upsert: true });
 
     if (storageError) throw storageError;
+
+    // Database အကွက် ၂၀ မကျော်စေရန် ကာကွယ်ထားခြင်း
+    const safeContact = String(customer_contact).trim().slice(0, 20);
 
     const { error: dbError } = await supabase.from('orders').insert([{
       id: order_id,
       ticket_id,
       ticket_number,
-      telegram_chat_id: customer_contact,
+      telegram_chat_id: safeContact,
       channel: slipFileName,
       payment_method: 'slip_transfer',
       status: 'pending'
@@ -103,7 +107,7 @@ app.post('/api/submit-order', upload.single('slip_image'), async (req, res) => {
   }
 });
 
-// ၄။ Admin စစ်ဆေးရန် Pending Orders များကို သီးသန့်ဆွဲယူခြင်း (Error ကင်းလွတ်အောင် ပြင်ဆင်ပြီး)
+// ၄။ Admin စစ်ဆေးရန် Orders များကို ဆွဲယူခြင်း
 app.get('/api/admin/pending-orders', async (req, res) => {
   try {
     const { data: orders, error } = await supabase
@@ -117,7 +121,6 @@ app.get('/api/admin/pending-orders', async (req, res) => {
       return res.json([]);
     }
 
-    // လက်မှတ်အချက်အလက်များကို ID ဖြင့် သီးသန့်ဆွဲယူခြင်း
     const ticketIds = orders.map(o => o.ticket_id).filter(Boolean);
     let ticketMap = {};
 
@@ -132,7 +135,6 @@ app.get('/api/admin/pending-orders', async (req, res) => {
       });
     }
 
-    // ပုံများအား ကြည့်ရှုနိုင်မည့် လင့်ခ်များ ထုတ်ပေးခြင်း
     const enrichedOrders = await Promise.all(
       orders.map(async (order) => {
         const ticket = ticketMap[order.ticket_id] || {};
@@ -169,7 +171,7 @@ app.get('/api/admin/pending-orders', async (req, res) => {
   }
 });
 
-// ၅။ Admin မှ ပုံပို့ပြီးနောက် Order အပြီးသတ်ခြင်း
+// ၅။ Order အပြီးသတ်ခြင်း
 app.post('/api/admin/complete-order', async (req, res) => {
   try {
     const { order_id, ticket_id } = req.body;
