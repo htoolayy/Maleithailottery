@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>အွန်လိုင်း ထိုင်းထီ အရောင်း</title>
+  <title>မယ်အိ ထိုင်းထီ အရောင်း</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 min-h-screen p-3 md:p-6 font-sans">
   <div class="max-w-md mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
     
-    <!-- Header -->
+    <!-- Header (Title အမှန် ပြင်ဆင်ပြီး) -->
     <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 text-white text-center">
-      <h1 class="text-2xl font-black tracking-wide">🇲🇲 မလေး ထိုင်းထီ အရောင်း 🇹🇭</h1>
+      <h1 class="text-2xl font-black tracking-wide">🇲🇲 မယ်အိ ထိုင်းထီ အရောင်း 🇹🇭</h1>
       <p class="text-xs text-blue-100 mt-1">အွန်လိုင်းမှ စိတ်ကြိုက်နံပါတ် ရွေးချယ်ဝယ်ယူနိုင်ပါသည်</p>
     </div>
 
@@ -173,7 +173,6 @@
   </div>
 
   <script>
-    // Admin ဆက်သွယ်ရန် အချက်အလက်များ
     const ADMIN_PHONE = '09975191980';
     const ADMIN_VIBER = '959975191980';
     const ADMIN_TG_USERNAME = 'tradejohnn';
@@ -181,9 +180,8 @@
     let currentOrderId = '';
     let selectedTicket = null;
     let allTickets = [];
-    let currentContactMethod = 'telegram'; // Default contact method
+    let currentContactMethod = 'telegram';
 
-    // Telegram သို့မဟုတ် Viber ရွေးချယ်မှု ပြောင်းလဲသည့် Function
     function selectContactType(type) {
       currentContactMethod = type;
       const tabTg = document.getElementById('tab-tg');
@@ -198,4 +196,164 @@
         input.placeholder = 'ဥပမာ - @username (သို့) 09...';
       } else {
         tabViber.className = 'py-2.5 px-3 rounded-xl border-2 border-purple-600 bg-purple-50 text-purple-700 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition';
-        tabTg.className
+        tabTg.className = 'py-2.5 px-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-600 font-bold text-xs flex items-center justify-center gap-2 transition';
+        label.innerText = 'သင့် Viber ဖုန်းနံပါတ်:';
+        input.placeholder = 'ဥပမာ - 09975191980';
+      }
+    }
+
+    // ဆာဗာမှ ဒေတာဆွဲယူခြင်း (Timeout ဖြင့် ကာကွယ်ထားသည်)
+    async function loadTickets() {
+      const container = document.getElementById('tickets-container');
+      const countEl = document.getElementById('ticket-count');
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 စက္ကန့် စောင့်မည်
+
+        const res = await fetch('/api/tickets?t=' + Date.now(), { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        const data = await res.json();
+        allTickets = Array.isArray(data) ? data : [];
+        renderTickets(allTickets);
+      } catch (err) {
+        countEl.innerText = '';
+        container.innerHTML = `
+          <div class="col-span-2 text-center py-6 px-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+            <div class="text-xs text-slate-600">ဆာဗာ တုန့်ပြန်မှု ကြာနေပါသည်ခင်ဗျာ။</div>
+            <button onclick="loadTickets()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-4 rounded-lg text-xs shadow">
+              🔄 ပြန်လည် ကြိုးစားမည်
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function renderTickets(tickets) {
+      const container = document.getElementById('tickets-container');
+      const countEl = document.getElementById('ticket-count');
+      container.innerHTML = '';
+      countEl.innerText = `${tickets.length} စောင် ရနိုင်ပါသည်`;
+
+      if (tickets.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-2 text-center text-slate-500 py-8 px-4 bg-slate-50 rounded-xl border border-slate-200 text-xs leading-relaxed">
+            လက်ရှိတွင် ရောင်းရန် ထီလက်မှတ် အသစ်မရှိသေးပါခင်ဗျာ။<br>
+            <span class="text-[11px] text-slate-400">(Admin မှ လက်မှတ်အသစ်များ တင်သွင်းပေးပါမည်)</span>
+          </div>
+        `;
+        return;
+      }
+
+      tickets.forEach(ticket => {
+        const price = ticket.price || 15000;
+        const isTwin = price === 30000;
+        const div = document.createElement('div');
+        div.className = 'border-2 border-slate-200 rounded-xl p-3 text-center cursor-pointer hover:border-blue-500 bg-slate-50 hover:bg-white transition relative overflow-hidden shadow-sm';
+        div.innerHTML = `
+          <span class="absolute top-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${isTwin ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
+            ${isTwin ? '၂ စောင်တွဲ' : '၁ စောင်တွဲ'}
+          </span>
+          <div class="text-xl font-bold tracking-wider text-slate-800 mt-2 font-mono">${ticket.ticket_number}</div>
+          <div class="text-xs font-semibold text-red-500 mt-1">${Number(price).toLocaleString()} Ks</div>
+        `;
+        div.onclick = () => selectTicket(ticket);
+        container.appendChild(div);
+      });
+    }
+
+    function filterTickets() {
+      const query = document.getElementById('search-input').value.trim();
+      document.getElementById('clear-btn').classList.toggle('hidden', query.length === 0);
+      if (!query) return renderTickets(allTickets);
+      const filtered = allTickets.filter(t => 
+        String(t.ticket_number).startsWith(query) || String(t.ticket_number).includes(query)
+      );
+      renderTickets(filtered);
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('clear-btn').classList.add('hidden');
+      renderTickets(allTickets);
+    }
+
+    function selectTicket(ticket) {
+      selectedTicket = ticket;
+      currentOrderId = 'ORD' + Math.floor(100000 + Math.random() * 900000);
+
+      const price = ticket.price || 15000;
+      document.getElementById('selected-ticket-num').innerText = ticket.ticket_number;
+      document.getElementById('selected-ticket-type').innerText = price === 30000 ? '၂ စောင်တွဲ' : '၁ စောင်တွဲ';
+      document.getElementById('selected-ticket-price').innerText = `${Number(price).toLocaleString()} ကျပ်`;
+      document.getElementById('display-order-id').innerText = currentOrderId;
+
+      document.getElementById('checkout-box').classList.remove('hidden');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function copyOrderId() {
+      if (!currentOrderId) return;
+      navigator.clipboard.writeText(currentOrderId);
+      alert('Order ID ကို Copy ကူးပြီးပါပြီ: ' + currentOrderId);
+    }
+
+    function copyAdminViber() {
+      navigator.clipboard.writeText(ADMIN_PHONE);
+      alert('Admin ၏ Viber နံပါတ် ' + ADMIN_PHONE + ' ကို Copy ကူးပြီးပါပြီခင်ဗျာ။');
+    }
+
+    async function submitOrderWithSlip() {
+      const rawContact = document.getElementById('cust-contact').value.trim();
+      const fileInput = document.getElementById('slip-file');
+      const btn = document.getElementById('btn-submit');
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('ငွေလွှဲပြေစာ (စလစ်) ဓာတ်ပုံကို ရွေးချယ်ပေးပါခင်ဗျာ');
+        return;
+      }
+
+      let finalContact = rawContact;
+      if (!finalContact) {
+        finalContact = currentContactMethod === 'viber' ? 'Viber User' : 'TG User';
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'တင်ပို့နေပါသည်...';
+
+      const formData = new FormData();
+      formData.append('order_id', currentOrderId);
+      formData.append('ticket_id', selectedTicket.id);
+      formData.append('ticket_number', selectedTicket.ticket_number);
+      formData.append('customer_contact', finalContact);
+      formData.append('slip_image', fileInput.files[0]);
+
+      try {
+        const res = await fetch('/api/submit-order', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+          const prefillText = encodeURIComponent(`မင်္ဂလာပါ၊ ကျွန်တော် ထိုင်းထီ Order ID: ${currentOrderId} (${selectedTicket.ticket_number}) အတွက် စလစ်ပို့ထားပြီးပါပြီခင်ဗျာ။`);
+          
+          document.getElementById('modal-order-id').innerText = currentOrderId;
+          document.getElementById('btn-contact-tg').href = `https://t.me/${ADMIN_TG_USERNAME}?text=${prefillText}`;
+          document.getElementById('btn-contact-viber').href = `viber://chat?number=%2B${ADMIN_VIBER}&draft=${prefillText}`;
+
+          const modal = document.getElementById('success-modal');
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        } else {
+          alert('မအောင်မြင်ပါ: ' + (data.error || 'အမှားရှိနေပါသည်'));
+        }
+      } catch (err) {
+        alert('ချိတ်ဆက်မှု အမှားဖြစ်နေပါသည်');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '🚀 အော်ဒါတင်ပြီး စလစ်ပို့မည်';
+      }
+    }
+
+    loadTickets();
+  </script>
+</body>
+</html>
