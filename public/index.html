@@ -28,7 +28,7 @@
     .ticket-count { font-size: 12px; font-weight: 700; color: #4f46e5; }
 
     /* Grid Tickets */
-    .tickets-grid { display: grid; grid-cols: 2; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+    .tickets-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
     .ticket-card { border: 2px solid #e2e8f0; border-radius: 14px; padding: 12px 8px; text-align: center; cursor: pointer; background: #f8fafc; position: relative; transition: all 0.2s; }
     .ticket-card:active { transform: scale(0.97); }
     .ticket-card:hover { border-color: #3b82f6; background: #ffffff; }
@@ -52,11 +52,12 @@
     .order-id-text { flex: 1; background: #ffffff; border: 1px solid #d8b4fe; color: #6b21a8; font-family: monospace; font-size: 15px; font-weight: bold; text-align: center; padding: 6px; border-radius: 8px; }
     .copy-btn { background: #7e22ce; color: #ffffff; border: none; font-size: 11px; font-weight: bold; padding: 0 12px; border-radius: 8px; cursor: pointer; }
 
-    /* Inputs */
+    /* Inputs & Multi-Tabs */
     .form-group { margin-bottom: 12px; }
     .form-label { display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; }
-    .tabs-btn { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-    .tab { padding: 8px; font-size: 12px; font-weight: bold; border-radius: 10px; border: 2px solid #e2e8f0; background: #f8fafc; cursor: pointer; }
+    .tabs-btn { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .tab { padding: 8px 4px; font-size: 11px; font-weight: bold; border-radius: 10px; border: 2px solid #e2e8f0; background: #f8fafc; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .tab.active-messenger { border-color: #0084ff; background: #eff6ff; color: #0084ff; }
     .tab.active-tg { border-color: #0284c7; background: #f0f9ff; color: #0369a1; }
     .tab.active-viber { border-color: #7e22ce; background: #faf5ff; color: #6b21a8; }
     .text-input { width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; font-size: 13px; background: #f8fafc; outline: none; }
@@ -69,7 +70,7 @@
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 999; }
     .modal-card { background: #ffffff; border-radius: 20px; padding: 20px; max-width: 360px; width: 100%; text-align: center; }
-    .modal-btn { display: block; width: 100%; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: bold; text-decoration: none; margin-bottom: 8px; border: none; cursor: pointer; }
+    .modal-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px; border-radius: 12px; font-size: 12px; font-weight: bold; text-decoration: none; margin-bottom: 8px; border: none; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -149,11 +150,12 @@
         <div class="form-group">
           <label class="form-label">လက်မှတ်ပုံ လက်ခံရယူမည့် နည်းလမ်း:</label>
           <div class="tabs-btn">
-            <button type="button" onclick="selectContactType('telegram')" id="tab-tg" class="tab active-tg">✈️ Telegram</button>
+            <button type="button" onclick="selectContactType('messenger')" id="tab-ms" class="tab active-messenger">💬 Messenger</button>
+            <button type="button" onclick="selectContactType('telegram')" id="tab-tg" class="tab">✈️ Telegram</button>
             <button type="button" onclick="selectContactType('viber')" id="tab-viber" class="tab">🟣 Viber</button>
           </div>
-          <label id="contact-label" class="form-label">သင့် Telegram (@username သို့မဟုတ် ဖုန်း):</label>
-          <input type="text" id="cust-contact" placeholder="ဥပမာ - @username (သို့) 09..." class="text-input">
+          <label id="contact-label" class="form-label">သင့် Facebook အကောင့်အမည် (သို့မဟုတ် ဖုန်း):</label>
+          <input type="text" id="cust-contact" placeholder="ဥပမာ - Facebook Profile အမည် (သို့) ဖုန်း..." class="text-input">
         </div>
 
         <div class="form-group">
@@ -177,18 +179,23 @@
       <h3 style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:6px;">အော်ဒါတင်ခြင်း အောင်မြင်ပါသည်!</h3>
       <p style="font-size:12px; color:#475569; line-height:1.5; margin-bottom:14px;">
         Order ID: <b id="modal-order-id" style="color:#6b21a8; font-family:monospace;"></b><br>
-        ထီလက်မှတ်ပုံကို ချက်ချင်း ရယူနိုင်ရန် သင်အဆင်ပြေသည့် နည်းလမ်းဖြင့် Admin ထံ စာပို့ပေးပါခင်ဗျာ။
+        ထီလက်မှတ်ပုံကို ချက်ချင်း ရယူနိုင်ရန် သင်အဆင်ပြေသည့် နည်းလမ်းဖြင့် စာပို့ပေးပါခင်ဗျာ။
       </p>
 
+      <!-- Facebook Messenger 1-Click Link -->
+      <a id="btn-contact-ms" href="https://m.me/htoo.lay.923" target="_blank" onclick="handleMessengerClick()" class="modal-btn" style="background:#0084ff; color:#fff;">
+        💬 Messenger ဖြင့် Admin ထံ စာပို့မည်
+      </a>
+
+      <!-- Telegram Link -->
       <a id="btn-contact-tg" href="#" target="_blank" class="modal-btn" style="background:#0284c7; color:#fff;">
         ✈️ Telegram (@tradejohnn) ဖြင့် စာပို့မည်
       </a>
+
+      <!-- Viber Link -->
       <a id="btn-contact-viber" href="#" class="modal-btn" style="background:#7e22ce; color:#fff;">
         🟣 Viber (09975191980) ဖြင့် စာပို့မည်
       </a>
-      <button onclick="copyAdminViber()" type="button" class="modal-btn" style="background:#f3e8ff; color:#6b21a8; border:1px solid #d8b4fe;">
-        📋 Admin Viber နံပါတ် Copy ယူမည်
-      </button>
 
       <button onclick="location.reload()" class="modal-btn" style="background:#f1f5f9; color:#64748b; margin-top:6px;">
         ပိတ်မည်
@@ -200,27 +207,35 @@
     const ADMIN_PHONE = '09975191980';
     const ADMIN_VIBER = '959975191980';
     const ADMIN_TG_USERNAME = 'tradejohnn';
+    const ADMIN_FB_USERNAME = 'htoo.lay.923';
 
     let currentOrderId = '';
     let selectedTicket = null;
     let allTickets = [];
-    let currentContactMethod = 'telegram';
+    let currentContactMethod = 'messenger';
 
     function selectContactType(type) {
       currentContactMethod = type;
+      const tabMs = document.getElementById('tab-ms');
       const tabTg = document.getElementById('tab-tg');
       const tabViber = document.getElementById('tab-viber');
       const label = document.getElementById('contact-label');
       const input = document.getElementById('cust-contact');
 
-      if (type === 'telegram') {
+      tabMs.className = 'tab';
+      tabTg.className = 'tab';
+      tabViber.className = 'tab';
+
+      if (type === 'messenger') {
+        tabMs.className = 'tab active-messenger';
+        label.innerText = 'သင့် Facebook အကောင့်အမည် (သို့မဟုတ် ဖုန်း):';
+        input.placeholder = 'ဥပမာ - Facebook Profile အမည် (သို့) ဖုန်း...';
+      } else if (type === 'telegram') {
         tabTg.className = 'tab active-tg';
-        tabViber.className = 'tab';
         label.innerText = 'သင့် Telegram (@username သို့မဟုတ် ဖုန်း):';
         input.placeholder = 'ဥပမာ - @username (သို့) 09...';
       } else {
         tabViber.className = 'tab active-viber';
-        tabTg.className = 'tab';
         label.innerText = 'သင့် Viber ဖုန်းနံပါတ်:';
         input.placeholder = 'ဥပမာ - 09975191980';
       }
@@ -305,9 +320,10 @@
       alert('Order ID ကို Copy ကူးပြီးပါပြီ: ' + currentOrderId);
     }
 
-    function copyAdminViber() {
-      navigator.clipboard.writeText(ADMIN_PHONE);
-      alert('Admin ၏ Viber နံပါတ် ' + ADMIN_PHONE + ' ကို Copy ကူးပြီးပါပြီ');
+    function handleMessengerClick() {
+      const text = `မင်္ဂလာပါ၊ ကျွန်တော် ထိုင်းထီ Order ID: ${currentOrderId} (${selectedTicket?.ticket_number || ''}) အတွက် စလစ်ပို့ထားပြီးပါပြီခင်ဗျာ။`;
+      navigator.clipboard.writeText(text);
+      alert('Order အချက်အလက် စာသားကို Copy ကူးပေးထားပါသည်!\n\nMessenger ပွင့်သွားပါက စာရိုက်ကွက်တွင် Paste ချပြီး ပို့ပေးပါခင်ဗျာ။');
     }
 
     async function submitOrderWithSlip() {
@@ -322,7 +338,7 @@
 
       let finalContact = rawContact;
       if (!finalContact) {
-        finalContact = currentContactMethod === 'viber' ? 'Viber User' : 'TG User';
+        finalContact = currentContactMethod === 'messenger' ? 'FB Messenger' : (currentContactMethod === 'viber' ? 'Viber User' : 'TG User');
       }
 
       btn.disabled = true;
@@ -342,6 +358,7 @@
           const prefillText = encodeURIComponent(`မင်္ဂလာပါ၊ ကျွန်တော် ထိုင်းထီ Order ID: ${currentOrderId} (${selectedTicket.ticket_number}) အတွက် စလစ်ပို့ထားပြီးပါပြီခင်ဗျာ။`);
           
           document.getElementById('modal-order-id').innerText = currentOrderId;
+          document.getElementById('btn-contact-ms').href = `https://m.me/${ADMIN_FB_USERNAME}`;
           document.getElementById('btn-contact-tg').href = `https://t.me/${ADMIN_TG_USERNAME}?text=${prefillText}`;
           document.getElementById('btn-contact-viber').href = `viber://chat?number=%2B${ADMIN_VIBER}&draft=${prefillText}`;
 
